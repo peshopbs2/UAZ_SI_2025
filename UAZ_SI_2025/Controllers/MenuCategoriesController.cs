@@ -2,28 +2,41 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Humanizer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using UAZ_SI_2025.Business.Services.Interfaces;
 using UAZ_SI_2025.Data;
 using UAZ_SI_2025.Models.Domain.Entities;
+using UAZ_SI_2025.Models.ViewModels.MenuCategory;
 
 namespace UAZ_SI_2025.Controllers
 {
     public class MenuCategoriesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMenuService _menuService;
+        private readonly IMenuCategoryService _menuCategoryService;
 
-        public MenuCategoriesController(ApplicationDbContext context)
+        public MenuCategoriesController(IMenuService menuService, IMenuCategoryService menuCategoryService)
         {
-            _context = context;
+            _menuService = menuService;
+            _menuCategoryService = menuCategoryService;
         }
 
         // GET: MenuCategories
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.MenuCategories.Include(m => m.Menu);
-            return View(await applicationDbContext.ToListAsync());
+            var items = await _menuCategoryService.GetAllAsync();
+            return View(items);
+        }
+
+        [HttpGet("MenuCategories/Menu/{menuId:guid}")]
+        public async Task<IActionResult> Menu(Guid menuId)
+        {
+            var items = await _menuCategoryService.GetByMenuIdAsync(menuId);
+            return View(items);
         }
 
         // GET: MenuCategories/Details/5
@@ -34,9 +47,7 @@ namespace UAZ_SI_2025.Controllers
                 return NotFound();
             }
 
-            var menuCategory = await _context.MenuCategories
-                .Include(m => m.Menu)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var menuCategory = await _menuCategoryService.GetByIdAsync(id.Value);
             if (menuCategory == null)
             {
                 return NotFound();
@@ -46,9 +57,10 @@ namespace UAZ_SI_2025.Controllers
         }
 
         // GET: MenuCategories/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["MenuId"] = new SelectList(_context.Menus, "Id", "Title");
+            var menus = await _menuService.GetAllAsync();
+            ViewData["MenuId"] = new SelectList(menus, "Id", "Title");
             return View();
         }
 
@@ -57,16 +69,16 @@ namespace UAZ_SI_2025.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Title,Description,Icon,MenuId,Id")] MenuCategory menuCategory)
+        public async Task<IActionResult> Create(MenuCategoryCreateViewModel menuCategory)
         {
             if (ModelState.IsValid)
             {
-                menuCategory.Id = Guid.NewGuid();
-                _context.Add(menuCategory);
-                await _context.SaveChangesAsync();
+                await _menuCategoryService.CreateAsync(menuCategory);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["MenuId"] = new SelectList(_context.Menus, "Id", "Title", menuCategory.MenuId);
+
+            var menus = await _menuService.GetAllAsync();
+            ViewData["MenuId"] = new SelectList(menus, "Id", "Title", menuCategory.MenuId);
             return View(menuCategory);
         }
 
@@ -78,12 +90,13 @@ namespace UAZ_SI_2025.Controllers
                 return NotFound();
             }
 
-            var menuCategory = await _context.MenuCategories.FindAsync(id);
+            var menuCategory = await _menuCategoryService.GetByIdAsync(id.Value);
             if (menuCategory == null)
             {
                 return NotFound();
             }
-            ViewData["MenuId"] = new SelectList(_context.Menus, "Id", "Title", menuCategory.MenuId);
+            var menus = await _menuService.GetAllAsync();
+            ViewData["MenuId"] = new SelectList(menus, "Id", "Title", menuCategory.MenuId);
             return View(menuCategory);
         }
 
@@ -92,7 +105,7 @@ namespace UAZ_SI_2025.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Title,Description,Icon,MenuId,Id")] MenuCategory menuCategory)
+        public async Task<IActionResult> Edit(Guid id, MenuCategoryEditViewModel menuCategory)
         {
             if (id != menuCategory.Id)
             {
@@ -103,12 +116,11 @@ namespace UAZ_SI_2025.Controllers
             {
                 try
                 {
-                    _context.Update(menuCategory);
-                    await _context.SaveChangesAsync();
+                    await _menuCategoryService.UpdateAsync(menuCategory);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!MenuCategoryExists(menuCategory.Id))
+                    if (!await MenuCategoryExistsAsync(menuCategory.Id))
                     {
                         return NotFound();
                     }
@@ -119,7 +131,8 @@ namespace UAZ_SI_2025.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["MenuId"] = new SelectList(_context.Menus, "Id", "Title", menuCategory.MenuId);
+            var items = await _menuService.GetAllAsync();
+            ViewData["MenuId"] = new SelectList(items, "Id", "Title", menuCategory.MenuId);
             return View(menuCategory);
         }
 
@@ -131,9 +144,7 @@ namespace UAZ_SI_2025.Controllers
                 return NotFound();
             }
 
-            var menuCategory = await _context.MenuCategories
-                .Include(m => m.Menu)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var menuCategory = await _menuCategoryService.GetByIdAsync(id.Value);
             if (menuCategory == null)
             {
                 return NotFound();
@@ -147,19 +158,19 @@ namespace UAZ_SI_2025.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var menuCategory = await _context.MenuCategories.FindAsync(id);
+            var menuCategory = await _menuCategoryService.GetByIdAsync(id);
             if (menuCategory != null)
             {
-                _context.MenuCategories.Remove(menuCategory);
+                await _menuCategoryService.DeleteAsync(id);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool MenuCategoryExists(Guid id)
+        private async Task<bool> MenuCategoryExistsAsync(Guid id)
         {
-            return _context.MenuCategories.Any(e => e.Id == id);
+            var menuCategory = await _menuCategoryService.GetByIdAsync(id);
+            return menuCategory != null;
         }
     }
 }

@@ -30,6 +30,7 @@
                     <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
                 }
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                <a asp-action="Menu" asp-route-id="@item.Id" asp-controller="MenuCategories">See more</a>
                 @if(User.IsInRole("Admin"))
                 {
                     <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>

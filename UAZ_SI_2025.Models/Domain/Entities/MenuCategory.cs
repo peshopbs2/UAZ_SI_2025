@@ -10,7 +10,7 @@ namespace UAZ_SI_2025.Models.Domain.Entities
 
         [Display(Name="Menu")]
         public Guid MenuId { get; set; }
-        public Menu? Menu { get; set; } = null!;
+        public Menu Menu { get; set; } = null!;
         public List<MenuItem>? MenuItems { get; set; } = null!;
     }
 }
