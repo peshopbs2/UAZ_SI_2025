@@ -1,4 +1,4 @@
-﻿@model IEnumerable<UAZ_SI_2025.Models.ViewModels.MenuCategory.MenuCategoryViewModel>
+﻿@model IEnumerable<UAZ_SI_2025.Models.ViewModels.MenuItem.MenuItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -19,10 +19,13 @@
                 @Html.DisplayNameFor(model => model.Description)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Icon)
+                @Html.DisplayNameFor(model => model.Price)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Menu)
+                @Html.DisplayNameFor(model => model.ImageUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MenuCategory)
             </th>
             <th></th>
         </tr>
@@ -38,15 +41,17 @@
                     @Html.DisplayFor(modelItem => item.Description)
                 </td>
                 <td>
-                    <img src="@Html.DisplayFor(modelItem => item.Icon)" width="100" />
+                    @Html.DisplayFor(modelItem => item.Price)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Menu.Title)
+                    <img src="@Html.DisplayFor(modelItem => item.ImageUrl)" width="200" />
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MenuCategory.Title)
                 </td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                     <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="MenuCategory" asp-route-id="@item.Id" asp-controller="MenuItem">See more</a>
                     <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
                 </td>
             </tr>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<UAZ_SI_2025.Models.Domain.Entities.MenuItem>
+﻿@model IEnumerable<UAZ_SI_2025.Models.ViewModels.MenuItem.MenuItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -43,7 +43,7 @@
                 @Html.DisplayFor(modelItem => item.Price)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ImageUrl)
+                <img src="@Html.DisplayFor(modelItem => item.ImageUrl)" width="200" />
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.MenuCategory.Title)

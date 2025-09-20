@@ -22,6 +22,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<IMenuService, MenuService>();
 builder.Services.AddTransient<IMenuCategoryService, MenuCategoryService>();
+builder.Services.AddTransient<IMenuItemService, MenuItemService>();
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 var app = builder.Build();
 
